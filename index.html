@@ -283,13 +283,9 @@ footer { background: var(--secondary); color: var(--white); text-align: center; 
   <p style="font-size: 0.85rem; opacity: 0.9; margin-top: 0.4rem;">Registro Turismo Andalucía: <strong>VUT/AL/00000</strong></p>
   <p style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.4rem;">info@bis4u.eu</p>
 </footer>
-<script>
-    // BEZETTE DATA INSTELLEN (Formaat: "JJJJ-MM-DD")
-    const bezetteData = [
-        "2026-11-25", "2026-11-26", "2026-11-27", "2026-11-28", "2026-11-29",  "2026-12-24", "2026-12-25", "2026-12-26", "2026-12-27",
-        "2027-01-02", "2027-01-03", "2027-01-04"
-    ];
 
+<script>
+    let bezetteData = [];
     let huidigeDatum = new Date();
     let huidigeMaand = huidigeDatum.getMonth();
     let huidigJaar = huidigeDatum.getFullYear();
@@ -298,6 +294,32 @@ footer { background: var(--secondary); color: var(--white); text-align: center; 
 
     function formatDateStr(year, month, day) {
         return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    // Haal de datums op uit boekingen.txt
+    async function laadBoekingen() {
+        try {
+            // '?v=' zorgt ervoor dat de browser altijd de nieuwste versie ophaalt
+            const response = await fetch('boekingen.txt?v=' + new Date().getTime());
+            const tekst = await response.text();
+            
+            // Zoek op elke regel naar twee datums (JJJJ-MM-DD)
+            const regels = tekst.split('\n');
+            regels.forEach(regel => {
+                const datums = regel.match(/\d{4}-\d{2}-\d{2}/g);
+                if (datums && datums.length >= 2) {
+                    let start = new Date(datums);
+                    const eind = new Date(datums[1]);
+                    while (start <= eind) {
+                        bezetteData.push(start.toISOString().split('T'));
+                        start.setDate(start.getDate() + 1);
+                    }
+                }
+            });
+        } catch (error) {
+            console.log("Kon boekingen.txt nog niet laden:", error);
+        }
+        tekenKalender();
     }
 
     function tekenKalender() {
@@ -344,7 +366,8 @@ footer { background: var(--secondary); color: var(--white); text-align: center; 
         tekenKalender();
     });
 
-    tekenKalender();
+    // Start de kalender door eerst het tekstbestand te lezen
+    laadBoekingen();
 </script>
 
 </body>
