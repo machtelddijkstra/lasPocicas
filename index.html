@@ -284,7 +284,7 @@ footer { background: var(--secondary); color: var(--white); text-align: center; 
   <p style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.4rem;">info@bis4u.eu</p>
 </footer>
 
-<script>
+  <script>
     let bezetteData = [];
     let huidigeDatum = new Date();
     let huidigeMaand = huidigeDatum.getMonth();
@@ -299,25 +299,27 @@ footer { background: var(--secondary); color: var(--white); text-align: center; 
     // Haal de datums op uit boekingen.txt
     async function laadBoekingen() {
         try {
-            // '?v=' zorgt ervoor dat de browser altijd de nieuwste versie ophaalt
             const response = await fetch('boekingen.txt?v=' + new Date().getTime());
-            const tekst = await response.text();
+            if (!response.ok) throw new Error("Bestand niet gevonden");
             
-            // Zoek op elke regel naar twee datums (JJJJ-MM-DD)
+            const tekst = await response.text();
             const regels = tekst.split('\n');
+            
             regels.forEach(regel => {
+                // Zoek alle datums in de vorm JJJJ-MM-DD op deze regel
                 const datums = regel.match(/\d{4}-\d{2}-\d{2}/g);
                 if (datums && datums.length >= 2) {
-                    let start = new Date(datums);
-                    const eind = new Date(datums[1]);
+                    let start = new Date(datums[0] + "T12:00:00");
+                    const eind = new Date(datums[1] + "T12:00:00");
+                    
                     while (start <= eind) {
-                        bezetteData.push(start.toISOString().split('T'));
+                        bezetteData.push(start.toISOString().split('T')[0]);
                         start.setDate(start.getDate() + 1);
                     }
                 }
             });
         } catch (error) {
-            console.log("Kon boekingen.txt nog niet laden:", error);
+            console.log("Fout bij laden van boekingen.txt:", error);
         }
         tekenKalender();
     }
@@ -366,7 +368,6 @@ footer { background: var(--secondary); color: var(--white); text-align: center; 
         tekenKalender();
     });
 
-    // Start de kalender door eerst het tekstbestand te lezen
     laadBoekingen();
 </script>
 
